@@ -78,15 +78,9 @@ trait SerializesAndRestoresModelIdentifiers
             return $collection;
         }
 
-        $collection = $collection->keyBy->getKey();
-
-        $collectionClass = get_class($collection);
-
-        return new $collectionClass(
-            collect($value->id)->map(function ($id) use ($collection) {
-                return $collection[$id] ?? null;
-            })->filter()
-        );
+        return $collection->sortBy(function ($item) use ($value) {
+            return array_search($item->getKey(), $value->id, true);
+        });
     }
 
     /**
