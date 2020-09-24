@@ -5,6 +5,7 @@ namespace Illuminate\Database\Query\Grammars;
 use Illuminate\Database\Grammar as BaseGrammar;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Query\JoinClause;
+use Illuminate\Database\Query\JsonPath;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -1147,7 +1148,7 @@ class Grammar extends BaseGrammar
     /**
      * Wrap a value in keyword identifiers.
      *
-     * @param  \Illuminate\Database\Query\Expression|string  $value
+     * @param  \Illuminate\Database\Query\Expression|\Illuminate\Database\Query\JsonPath|string  $value
      * @param  bool  $prefixAlias
      * @return string
      */
@@ -1212,11 +1213,18 @@ class Grammar extends BaseGrammar
     /**
      * Split the given JSON selector into the field and the optional path and wrap them separately.
      *
-     * @param  string  $column
+     * @param  \Illuminate\Database\Query\JsonPath|string  $column
      * @return array
      */
     protected function wrapJsonFieldAndPath($column)
     {
+        if ($column instanceof JsonPath) {
+            return [
+                $this->wrap($column->getColumn()),
+                ', '.$column->toSql(),
+            ];
+        }
+
         $parts = explode('->', $column, 2);
 
         $field = $this->wrap($parts[0]);
@@ -1241,14 +1249,14 @@ class Grammar extends BaseGrammar
     }
 
     /**
-     * Determine if the given string is a JSON selector.
+     * Determine if the given value is a JSON selector.
      *
-     * @param  string  $value
+     * @param  \Illuminate\Database\Query\JsonPath|string  $value
      * @return bool
      */
     protected function isJsonSelector($value)
     {
-        return Str::contains($value, '->');
+        return $value instanceof JsonPath || Str::contains($value, '->');
     }
 
     /**

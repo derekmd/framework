@@ -2,6 +2,7 @@
 
 namespace Illuminate\Tests\Integration\Database;
 
+use Illuminate\Database\Query\JsonPath;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -21,7 +22,7 @@ class DatabaseMySqlConnectionTest extends DatabaseMySqlTestCase
         parent::setUp();
 
         if (! isset($_SERVER['CI']) || windows_os()) {
-            $this->markTestSkipped('This test is only executed on CI in Linux.');
+            // $this->markTestSkipped('This test is only executed on CI in Linux.');
         }
 
         if (! Schema::hasTable(self::TABLE)) {
@@ -107,5 +108,32 @@ class DatabaseMySqlConnectionTest extends DatabaseMySqlTestCase
             'nested key exists and "null"' => [false, 'nested->value', ['nested' => ['value' => 'null']]],
             'nested key exists and not null' => [false, 'nested->value', ['nested' => ['value' => false]]],
         ];
+    }
+
+    public function testJsonPathSelect()
+    {
+        DB::table(self::TABLE)->insert([
+            [self::JSON_COL => '{"rank":0.2}'],
+            [self::JSON_COL => '{"rank":0.8}'],
+        ]);
+        $this->assertTrue(
+            DB::table(self::TABLE)->where(JsonPath::make(self::JSON_COL)->rank, '>', 0.5)->exists(),
+            self::JSON_COL.', \'$."rank"\' should be > 0.5'
+        );
+    }
+
+    public function testJsonPathUpdate()
+    {
+        DB::table(self::TABLE)->insert([
+            [self::JSON_COL => '{"rank":0.2}'],
+            [self::JSON_COL => '{"rank":0.8}'],
+        ]);
+        $updatedCount = DB::table(self::TABLE)->where(JsonPath::make(self::JSON_COL)->rank, '>', 0.5)->update([
+            JsonPath::make(self::JSON_COL)->rank => 0.7, // An object can't be an associatve array key. Obviously.
+        ]);
+        $this->assertSame(1, $updatedCount);
+        $this->assertDatabaseHas(self::table, [
+            self::JSON_COL => '{"rank":0.7}',
+        ]);
     }
 }
