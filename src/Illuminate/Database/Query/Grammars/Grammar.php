@@ -962,8 +962,25 @@ class Grammar extends BaseGrammar
     protected function compileUpdateColumns(Builder $query, array $values)
     {
         return collect($values)->map(function ($value, $key) {
+            if ($this->isJsonPathSet($value)) {
+                return $this->wrap(Arr::first($value)).' = '.$this->parameter(Arr::last($value));
+            }
+
             return $this->wrap($key).' = '.$this->parameter($value);
         })->implode(', ');
+    }
+
+    /**
+     * Determine if the column values are a JSON path expression.
+     *
+     * @param  mixed  $value
+     * @return bool
+     */
+    protected function isJsonPathSet($value)
+    {
+        return is_array($value) &&
+            count($value) === 2 &&
+            Arr::first($value) instanceof JsonPath;
     }
 
     /**

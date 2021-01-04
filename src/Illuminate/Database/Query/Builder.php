@@ -3038,9 +3038,30 @@ class Builder
 
         $sql = $this->grammar->compileUpdate($this, $values);
 
+        $values = array_map(function ($value) {
+            if ($this->isJsonPathSet($value)) {
+                return Arr::last($value);
+            }
+
+            return $value;
+        }, $values);
+
         return $this->connection->update($sql, $this->cleanBindings(
             $this->grammar->prepareBindingsForUpdate($this->bindings, $values)
         ));
+    }
+
+    /**
+     * Determine if the column values are a JSON path expression.
+     *
+     * @param  mixed  $value
+     * @return bool
+     */
+    protected function isJsonPathSet($value)
+    {
+        return is_array($value) &&
+            count($value) === 2 &&
+            Arr::first($value) instanceof JsonPath;
     }
 
     /**

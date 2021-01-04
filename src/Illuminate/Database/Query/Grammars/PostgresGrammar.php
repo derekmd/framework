@@ -210,6 +210,11 @@ class PostgresGrammar extends Grammar
         return collect($values)->map(function ($value, $key) {
             $column = last(explode('.', $key));
 
+            if ($this->isJsonPathSet($value)) {
+                $key = Arr::first($value);
+                $value = Arr::last($value);
+            }
+
             if ($this->isJsonSelector($key)) {
                 return $this->compileJsonUpdateColumn($column, $value);
             }

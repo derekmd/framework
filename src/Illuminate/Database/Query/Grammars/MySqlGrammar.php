@@ -3,6 +3,7 @@
 namespace Illuminate\Database\Query\Grammars;
 
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class MySqlGrammar extends Grammar
@@ -144,6 +145,11 @@ class MySqlGrammar extends Grammar
     protected function compileUpdateColumns(Builder $query, array $values)
     {
         return collect($values)->map(function ($value, $key) {
+            if ($this->isJsonPathSet($value)) {
+                $key = Arr::first($value);
+                $value = Arr::last($value);
+            }
+
             if ($this->isJsonSelector($key)) {
                 return $this->compileJsonUpdateColumn($key, $value);
             }

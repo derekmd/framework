@@ -172,7 +172,7 @@ class SQLiteGrammar extends Grammar
         $jsonGroups = $this->groupJsonColumnsForUpdate($values);
 
         return collect($values)->reject(function ($value, $key) {
-            return $this->isJsonSelector($key);
+            return $this->isJsonPathSet($value) || $this->isJsonSelector($key);
         })->merge($jsonGroups)->map(function ($value, $key) use ($jsonGroups) {
             $column = last(explode('.', $key));
 

@@ -129,11 +129,11 @@ class DatabaseMySqlConnectionTest extends DatabaseMySqlTestCase
             [self::JSON_COL => '{"rank":0.8}'],
         ]);
         $updatedCount = DB::table(self::TABLE)->where(JsonPath::make(self::JSON_COL)->rank, '>', 0.5)->update([
-            JsonPath::make(self::JSON_COL)->rank => 0.7, // An object can't be an associatve array key. Obviously.
+            [JsonPath::make(self::JSON_COL)->rank, 0.7],
         ]);
         $this->assertSame(1, $updatedCount);
-        $this->assertDatabaseHas(self::table, [
-            self::JSON_COL => '{"rank":0.7}',
+        $this->assertDatabaseHas(self::TABLE, [
+            self::JSON_COL => '{"rank": 0.7}',
         ]);
     }
 }
