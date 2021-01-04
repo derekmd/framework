@@ -1237,7 +1237,34 @@ class Grammar extends BaseGrammar
     {
         $value = preg_replace("/([\\\\]+)?\\'/", "''", $value);
 
-        return '\'$."'.str_replace($delimiter, '"."', $value).'"\'';
+        $jsonPath = collect(explode($delimiter, $value))
+            ->map(function ($segment) {
+                return $this->wrapJsonPathSegment($segment);
+            })
+            ->join('.');
+
+        return "'$".(Str::startsWith($jsonPath, '[') ? '' : '.').$jsonPath."'";
+    }
+
+    /**
+     * Wrap the given JSON path segment.
+     *
+     * @param  string  $segment
+     * @return string
+     */
+    protected function wrapJsonPathSegment($segment)
+    {
+        if (preg_match('/(\[[^\]]+\])+$/', $segment, $parts)) {
+            $key = Str::beforeLast($segment, $parts[0]);
+
+            if (! empty($key)) {
+                return '"'.$key.'"'.$parts[0];
+            }
+
+            return $parts[0];
+        }
+
+        return '"'.$segment.'"';
     }
 
     /**
